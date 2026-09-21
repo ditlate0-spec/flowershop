@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -25,7 +24,7 @@ class ProductController extends Controller
         $data = $this->validated($request);
 
         if ($request->hasFile('image_file')) {
-            $data['image'] = $request->file('image_file')->store('products', 'public');
+            $data['image'] = $this->saveImage($request->file('image_file'));
         }
 
         Product::create($data);
@@ -50,10 +49,8 @@ class ProductController extends Controller
         $data = $this->validated($request);
 
         if ($request->hasFile('image_file')) {
-            if ($product->image && str_starts_with($product->image, 'products/')) {
-                Storage::disk('public')->delete($product->image);
-            }
-            $data['image'] = $request->file('image_file')->store('products', 'public');
+            $this->deleteImage($product->image);
+            $data['image'] = $this->saveImage($request->file('image_file'));
         }
 
         $product->update($data);
@@ -65,15 +62,43 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        if ($product->image && str_starts_with($product->image, 'products/')) {
-            Storage::disk('public')->delete($product->image);
-        }
-
+        $this->deleteImage($product->image);
         $product->delete();
 
         return redirect()
             ->route('admin.products.index')
             ->with('success', 'Товар удалён');
+    }
+
+    /**
+     * Сохраняет файл физически в public/products/.
+     * Возвращает путь вида "products/abc123.png".
+     */
+    private function saveImage($file): string
+    {
+        $dir = public_path('products');
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $file->move($dir, $filename);
+
+        return 'products/' . $filename;
+    }
+
+    /**
+     * Удаляет файл из public/products/.
+     */
+    private function deleteImage(?string $image): void
+    {
+        if (!$image) return;
+        if (!str_starts_with($image, 'products/')) return;
+
+        $path = public_path($image);
+        if (file_exists($path)) {
+            @unlink($path);
+        }
     }
 
     private function validated(Request $request): array

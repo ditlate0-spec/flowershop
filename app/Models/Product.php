@@ -14,18 +14,11 @@ class Product extends Model
         'image', 'badge', 'size', 'life',
     ];
 
-    public function getImageUrlAttribute(): string
-    {
-        if (!$this->image) {
-            return asset('images/placeholder.png');
-        }
-
-        // новые фото из storage/app/public/products/
-        if (str_starts_with($this->image, 'products/')) {
-            return asset('storage/' . $this->image);
-        }
-
-        // старые фото из public/images/
-        return asset($this->image);
+public function getImageUrlAttribute(): string
+{
+    if (!$this->image) {
+        return asset('images/placeholder.png');
     }
+    return asset($this->image);
+}
 }
