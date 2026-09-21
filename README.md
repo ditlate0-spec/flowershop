@@ -107,7 +107,7 @@
 
 - URL: `/admin/products`
 - CRUD товаров: список (пагинация 15/стр.), создание, редактирование, удаление.
-- Загрузка картинок в `storage/app/public/products/` (PNG/JPG до 4 МБ).
+- Загрузка картинок в `public/products/` (PNG/JPG до 4 МБ).
 - Открывается **по 5 кликам на логотип** на главной (в iframe-модалке).
 - Валидация через `ProductController::validated()`.
 
@@ -122,7 +122,7 @@
 | **Один Blade-файл `home.blade.php`** | Быстрое прототипирование лендинга; всё в одном месте без разбиения на partials |
 | **Курсы валют в JS** | Не требует внешних API, работает офлайн; при необходимости легко заменить на запрос к ЦБ |
 | **Админка на 5 кликов по логотипу** | Скрытый вход без отдельной страницы логина — удобно для владельца-одиночки |
-| **Аксессор `image_url` в модели** | Поддержка двух источников картинок: старых из `public/images/` и новых из `storage/` |
+| **Аксессор image_url в модели | Единый путь через asset($this->image), файлы лежат в public/products/ или public/images/ |
 
 ## 🧠 Чему я научился
 
@@ -208,9 +208,6 @@ cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed
-php artisan storage:link
-npm install
-npm run build
 php artisan serve
 ```
 
@@ -342,9 +339,10 @@ php artisan config:clear
 
 Аксессор `Product::getImageUrlAttribute()`:
 
-- Если `image` пустой → `asset('images/placeholder.png')`.
-- Если начинается с `products/` → `asset('storage/' . $image)` (новые загрузки через админку).
-- Иначе → `asset($image)` (старые картинки из `public/images/`).
+Аксессор Product::getImageUrlAttribute() возвращает asset($this->image).
+Все фото лежат в public/:
+public/products/ — новые загрузки через админку
+public/images/ — старые картинки из сидера
 
 ### Заказы
 
@@ -412,7 +410,7 @@ const EXCHANGE_RATES = {
 
 - Список товаров с пагинацией (15 на страницу).
 - Создание / редактирование / удаление.
-- Загрузка картинок: PNG/JPG до 4 МБ, сохраняются в `storage/app/public/products/`.
+- Загрузка картинок: PNG/JPG до 4 МБ, сохраняются в `public/products/`.
 - Валидация через `ProductController::validated()`.
 
 ### Форма товара
@@ -431,7 +429,6 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan migrate --force
-php artisan storage:link
 chmod -R 775 storage bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 ```
